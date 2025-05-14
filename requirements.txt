@@ -1,5 +1,5 @@
-flask
-ultralytics
-Pillow
-opencv-python-headless
-gunicorn
+streamlit>=1.32.0
+ultralytics>=8.1.33
+Pillow>=9.0.0
+torch>=2.0.1
+torchvision>=0.15.2

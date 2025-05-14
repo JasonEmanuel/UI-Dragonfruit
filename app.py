@@ -1,42 +1,68 @@
-from flask import Flask, render_template, request
+import streamlit as st
 from ultralytics import YOLO
-from pathlib import Path
+from PIL import Image
 import os
 from datetime import datetime
 
-app = Flask(__name__)
+# Custom CSS style
+st.markdown("""
+    <style>
+    .main {
+        background: linear-gradient(to right, #f0fdf4, #dcfce7);
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .stButton > button {
+        background-color: #16a34a;
+        color: white;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 0.6em 1.5em;
+        transition: 0.3s;
+    }
+    .stButton > button:hover {
+        background-color: #15803d;
+    }
+    .stFileUploader {
+        background-color: #f0fdf4;
+        padding: 1em;
+        border: 2px dashed #4ade80;
+        border-radius: 12px;
+        text-align: center;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# Folder untuk upload & hasil
-UPLOAD_FOLDER = "static/uploads"
-PREDICT_FOLDER = os.path.join(UPLOAD_FOLDER, "predict")
+# Load model
+model = YOLO("best.pt")
 
-os.makedirs(PREDICT_FOLDER, exist_ok=True)
+# Title and description
+st.title("🍉 Deteksi Kematangan Buah Naga")
+st.write("Upload gambar buah naga, lalu sistem akan memprediksi tingkat kematangannya menggunakan model YOLOv11.")
 
-# Load model YOLOv11
-model_path = "best.pt"
-if not os.path.exists(model_path):
-    raise FileNotFoundError(f"Model '{model_path}' tidak ditemukan.")
+# File uploader
+uploaded_file = st.file_uploader("Unggah Gambar Buah", type=["jpg", "jpeg", "png"])
 
-model = YOLO(model_path)
+if uploaded_file is not None:
+    # Simpan file
+    uploads_dir = "static/uploads"
+    os.makedirs(uploads_dir, exist_ok=True)
+    filename = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uploaded_file.name
+    filepath = os.path.join(uploads_dir, filename)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    result_img = None
-    if request.method == "POST":
-        file = request.files.get("image")
-        if file:
-            # Simpan file upload
-            filename = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + file.filename
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
+    with open(filepath, "wb") as f:
+        f.write(uploaded_file.getbuffer())
 
-            # Deteksi dengan YOLOv11
-            results = model.predict(source=filepath, save=True, project=UPLOAD_FOLDER, name="predict", exist_ok=True)
+    # Tampilkan gambar yang diupload
+    st.image(Image.open(filepath), caption="📷 Gambar yang Diunggah", use_column_width=True)
 
-            # Path hasil deteksi (gambar dengan bounding box)
-            result_img = os.path.join("static", "uploads", "predict", os.path.basename(filepath))
+    # Deteksi
+    with st.spinner("🔍 Melakukan deteksi..."):
+        results = model.predict(source=filepath, save=True, project=uploads_dir, name="predict", exist_ok=True)
+        result_img_path = os.path.join(uploads_dir, "predict", os.path.basename(filepath))
 
-    return render_template("index.html", result_img=result_img)
-
-# Tidak pakai app.run() karena Render pakai Gunicorn
-# Gunicorn akan mencari variabel `app` di file ini
+    # Tampilkan hasil
+    if os.path.exists(result_img_path):
+        st.success("✅ Hasil Deteksi:")
+        st.image(result_img_path, use_column_width=True)
+    else:
+        st.warning("⚠️ Tidak ada objek terdeteksi.")
