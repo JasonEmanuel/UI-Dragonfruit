@@ -1,10 +1,14 @@
 import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
+import numpy as np
 import os
 from datetime import datetime
 
-# Custom CSS style
+# Load YOLO model
+model = YOLO("best.pt")
+
+# Custom CSS (optional, beautify UI)
 st.markdown("""
     <style>
     .main {
@@ -32,37 +36,25 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Load model
-model = YOLO("best.pt")
-
-# Title and description
+# Title & instructions
 st.title("🍉 Deteksi Kematangan Buah Naga")
-st.write("Upload gambar buah naga, lalu sistem akan memprediksi tingkat kematangannya menggunakan model YOLOv11.")
+st.write("Upload gambar buah naga, dan sistem akan mendeteksi kematangannya menggunakan YOLOv11.")
 
 # File uploader
-uploaded_file = st.file_uploader("Unggah Gambar Buah", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Unggah gambar (.jpg/.jpeg/.png)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Simpan file
-    uploads_dir = "static/uploads"
-    os.makedirs(uploads_dir, exist_ok=True)
-    filename = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uploaded_file.name
-    filepath = os.path.join(uploads_dir, filename)
+    # Simpan sementara file gambar ke RAM
+    img = Image.open(uploaded_file).convert("RGB")
+    st.image(img, caption="📷 Gambar yang Diunggah", use_container_width=True)
 
-    with open(filepath, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    # Deteksi menggunakan model
+    with st.spinner("🔍 Mendeteksi buah naga..."):
+        results = model.predict(img, conf=0.25, save=False)
 
-    # Tampilkan gambar yang diupload
-    st.image(Image.open(filepath), caption="📷 Gambar yang Diunggah", use_column_width=True)
-
-    # Deteksi
-    with st.spinner("🔍 Melakukan deteksi..."):
-        results = model.predict(source=filepath, save=True, project=uploads_dir, name="predict", exist_ok=True, conf=0.25)
-        result_img_path = os.path.join(uploads_dir, "predict", os.path.basename(filepath))
-
-    # Tampilkan hasil
-    if os.path.exists(result_img_path):
-        st.success("✅ Hasil Deteksi:")
-        st.image(result_img_path, use_column_width=True)
-    else:
-        st.warning("⚠️ Tidak ada objek terdeteksi.")
+        if results and results[0].boxes is not None and len(results[0].boxes) > 0:
+            # Visualisasikan langsung dari RAM (tanpa disimpan ke disk)
+            annotated_img = results[0].plot()  # ndarray BGR
+            st.image(annotated_img, caption="✅ Hasil Deteksi", channels="BGR", use_container_width=True)
+        else:
+            st.warning("⚠️ Tidak ada objek terdeteksi.")
