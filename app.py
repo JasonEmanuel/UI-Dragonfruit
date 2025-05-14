@@ -57,7 +57,7 @@ if uploaded_file is not None:
 
     # Deteksi
     with st.spinner("🔍 Melakukan deteksi..."):
-        results = model.predict(source=filepath, save=True, project=uploads_dir, name="predict", exist_ok=True)
+        results = model.predict(source=filepath, save=True, project=uploads_dir, name="predict", exist_ok=True, conf=0.25)
         result_img_path = os.path.join(uploads_dir, "predict", os.path.basename(filepath))
 
     # Tampilkan hasil
