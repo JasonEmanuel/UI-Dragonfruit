@@ -54,7 +54,7 @@ if uploaded_file is not None:
     st.image(img, caption="📷 Gambar yang Diunggah", use_container_width=True)
 
     with st.spinner("🔍 Mendeteksi buah naga..."):
-        results = model.predict(img, conf=0, save=False)
+        results = model.predict(img, conf=0.25, save=False)
         if results and results[0].boxes is not None and len(results[0].boxes) > 0:
             annotated_img = results[0].plot()
             st.image(annotated_img, caption="✅ Hasil Deteksi", channels="BGR", use_container_width=True)
