@@ -1,8 +1,7 @@
 import streamlit as st
 from ultralytics import YOLO
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
-import os
 from datetime import datetime
 
 # Load YOLO model
@@ -40,21 +39,24 @@ st.markdown("""
 st.title("🍉 Deteksi Kematangan Buah Naga")
 st.write("Upload gambar buah naga, dan sistem akan mendeteksi kematangannya menggunakan YOLOv11.")
 
+# Function to correct EXIF orientation
+def correct_image_orientation(image):
+    return ImageOps.exif_transpose(image)
+
 # File uploader
 uploaded_file = st.file_uploader("Unggah gambar (.jpg/.jpeg/.png)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Simpan sementara file gambar ke RAM
+    # Open and correct orientation
     img = Image.open(uploaded_file).convert("RGB")
+    img = correct_image_orientation(img)
+
     st.image(img, caption="📷 Gambar yang Diunggah", use_container_width=True)
 
-    # Deteksi menggunakan model
     with st.spinner("🔍 Mendeteksi buah naga..."):
         results = model.predict(img, conf=0.25, save=False)
-
         if results and results[0].boxes is not None and len(results[0].boxes) > 0:
-            # Visualisasikan langsung dari RAM (tanpa disimpan ke disk)
-            annotated_img = results[0].plot()  # ndarray BGR
+            annotated_img = results[0].plot()
             st.image(annotated_img, caption="✅ Hasil Deteksi", channels="BGR", use_container_width=True)
         else:
             st.warning("⚠️ Tidak ada objek terdeteksi.")
