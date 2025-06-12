@@ -49,12 +49,10 @@ def resize_image(image, size=(640, 640)):
     return image.resize(size)
 
 # Function: Adaptive Contrast Enhancement (Equalization)
-def equalize_image(pil_img):
-    img_np = np.array(pil_img)
-    img_yuv = cv2.cvtColor(img_np, cv2.COLOR_RGB2YUV)
-    img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
-    img_eq = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2RGB)
-    return Image.fromarray(img_eq)
+def normalize_brightness(pil_img):
+    img_np = np.array(pil_img).astype(np.float32) / 255.0
+    img_np = np.clip(img_np * 1.1, 0, 1)  # tingkatkan brightness
+    return Image.fromarray((img_np * 255).astype(np.uint8))
 
 # File uploader
 uploaded_file = st.file_uploader("Unggah gambar (.jpg/.jpeg/.png)", type=["jpg", "jpeg", "png"])

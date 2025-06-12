@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 2
+names: ['buah-naga-belum-matang', 'buah-naga-matang']
+
+roboflow:
+  workspace: ta-q1zeo
+  project: ta-kaw2p
+  version: 6
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/ta-q1zeo/ta-kaw2p/dataset/6
