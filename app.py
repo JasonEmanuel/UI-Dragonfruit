@@ -4,6 +4,7 @@ from PIL import Image, ImageOps
 import numpy as np
 import cv2
 from datetime import datetime
+from skimage import exposure
 
 # Load YOLO model
 model = YOLO("best.pt")
@@ -48,11 +49,16 @@ def correct_image_orientation(image):
 def resize_image(image, size=(640, 640)):
     return image.resize(size)
 
-# Function: Adaptive Contrast Enhancement (Equalization)
-def normalize_brightness(pil_img):
-    img_np = np.array(pil_img).astype(np.float32) / 255.0
-    img_np = np.clip(img_np * 1.1, 0, 1)  # tingkatkan brightness
-    return Image.fromarray((img_np * 255).astype(np.uint8))
+def equalize_image(pil_img):
+    # Convert PIL to NumPy grayscale image
+    img_gray = np.array(pil_img.convert("L"))
+
+    # Apply global histogram equalization (like Roboflow)
+    img_eq = exposure.equalize_hist(img_gray)  # result in float64 [0,1]
+    img_eq_uint8 = (img_eq * 255).astype(np.uint8)
+
+    return Image.fromarray(img_eq_uint8)
+
 
 # File uploader
 uploaded_file = st.file_uploader("Unggah gambar (.jpg/.jpeg/.png)", type=["jpg", "jpeg", "png"])
