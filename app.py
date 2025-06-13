@@ -51,7 +51,7 @@ def resize_image(image, size=(640, 640)):
 
 def equalize_image(pil_img):
     # Convert PIL to NumPy grayscale image
-    img_gray = np.array(pil_img.convert("L"))
+    img_gray = np.array(pil_img.convert("RGB"))
 
     # Apply global histogram equalization (like Roboflow)
     img_eq = exposure.equalize_hist(img_gray)  # result in float64 [0,1]
